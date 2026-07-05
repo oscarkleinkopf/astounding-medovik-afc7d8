@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="index.css">
 </head>
 <body>
@@ -24,6 +25,9 @@
           <span class="logo-subtitle" data-i18n="header.subtitle">Smart Organizer</span>
         </div>
         <div class="header-actions">
+          <button class="btn-secondary btn-sm" id="pwa-install-btn" style="display:none" data-i18n="pwa.installApp">
+            📲 <span>Install App</span>
+          </button>
           <div class="language-switcher">
             <select id="language-select" aria-label="Language">
               <option value="en">🇺🇸 EN</option>
@@ -98,6 +102,7 @@
             <div class="view-switcher-tabs">
               <button class="view-tab active" id="tab-categories-btn">📁 <span data-i18n="results.categories">Categories</span></button>
               <button class="view-tab" id="tab-readlater-btn">📖 <span data-i18n="readLater.title">Read Later</span></button>
+              <button class="view-tab" id="tab-gallery-btn">🖼️ <span data-i18n="results.visualGrid">Gallery</span></button>
             </div>
           </div>
           <div class="results-actions">
@@ -132,6 +137,10 @@
             <span>🔄</span>
             <span data-i18n="duplicates.findDuplicates">Find Duplicates</span>
           </button>
+          <button class="tool-btn" id="health-widget-btn" title="Executive Health Audit">
+            <span>💚</span>
+            <span data-i18n="health.title">Health Report</span>
+          </button>
           <button class="tool-btn" id="create-backup-btn" title="Create JSON backup">
             <span>💾</span>
             <span data-i18n="backup.create">Create Backup</span>
@@ -162,6 +171,12 @@
           <span class="tag-filter-label" data-i18n="tags.popular">Popular Tags</span>
           <div class="tag-cloud" id="tag-cloud"></div>
           <button class="tag-clear-btn" id="tag-clear-btn" style="display:none" data-i18n="tags.clearFilter">Clear filter</button>
+        </div>
+
+        <!-- Smart collections filter bar -->
+        <div class="smart-collections-bar" id="smart-collections-bar">
+          <span class="smart-collections-label" data-i18n="smart.collectionsTitle">Smart Collections</span>
+          <div class="smart-collections-chips" id="smart-collections-chips"></div>
         </div>
 
         <!-- Two-column results layout -->
@@ -202,6 +217,11 @@
             </div>
           </div>
           <div class="read-later-grid" id="read-later-grid"></div>
+        </div>
+
+        <!-- Visual Gallery Grid Layout -->
+        <div id="visual-grid-content" style="display:none">
+          <div class="visual-gallery-grid" id="visual-gallery-grid"></div>
         </div>
 
         <!-- Analytics Section -->
@@ -259,6 +279,7 @@
           <button class="modal-tab" data-tab="ai" role="tab" aria-selected="false" data-i18n="settings.aiTab">AI</button>
           <button class="modal-tab" data-tab="categories" role="tab" aria-selected="false" data-i18n="settings.categoriesTab">Categories</button>
           <button class="modal-tab" data-tab="tags" role="tab" aria-selected="false" data-i18n="tags.title">Tags</button>
+          <button class="modal-tab" data-tab="cloud" role="tab" aria-selected="false" data-i18n="cloud.tabTitle">Cloud Sync</button>
           <button class="modal-tab" data-tab="appearance" role="tab" aria-selected="false">🎨</button>
         </div>
 
@@ -373,13 +394,84 @@
               </div>
             </div>
           </div>
+
+          <!-- Cloud Sync Tab -->
+          <div class="tab-panel" id="panel-cloud" role="tabpanel">
+            <p class="settings-description" data-i18n="cloud.description">
+              Sync and backup your bookmark collection across devices using GitHub or Google Drive.
+            </p>
+            <div class="form-group">
+              <label for="cloud-provider" data-i18n="cloud.provider">Provider</label>
+              <select id="cloud-provider">
+                <option value="github">GitHub Repository</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cloud-github-token" data-i18n="cloud.githubToken">GitHub Personal Access Token</label>
+              <input type="password" id="cloud-github-token" placeholder="ghp_…">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md)">
+              <div class="form-group">
+                <label for="cloud-github-owner" data-i18n="cloud.githubOwner">Username / Owner</label>
+                <input type="text" id="cloud-github-owner" placeholder="oscarkleinkopf">
+              </div>
+              <div class="form-group">
+                <label for="cloud-github-repo" data-i18n="cloud.githubRepo">Repository Name</label>
+                <input type="text" id="cloud-github-repo" placeholder="astounding-medovik-afc7d8">
+              </div>
+            </div>
+            <button class="btn-secondary btn-sm" id="save-cloud-config-btn" style="margin-bottom:var(--space-md)" data-i18n="cloud.saveConfig">Save Settings</button>
+            <div class="divider"></div>
+            <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap">
+              <button class="btn-primary btn-sm" id="cloud-push-btn">☁️ <span data-i18n="cloud.push">Push to Cloud</span></button>
+              <button class="btn-secondary btn-sm" id="cloud-pull-btn">📥 <span data-i18n="cloud.pull">Pull from Cloud</span></button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- ═══════════════════════════════════
-         TOAST CONTAINER
+         HEALTH AUDIT MODAL
          ═══════════════════════════════════ -->
+    <div class="modal-overlay" id="health-modal" role="dialog" aria-modal="true" aria-labelledby="health-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title" id="health-title" data-i18n="health.title">Collection Health Audit</h2>
+          <button class="modal-close" id="health-close" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="health-audit-card">
+            <div class="health-score-ring">
+              <span class="health-score-number" id="health-score-val">100%</span>
+              <span class="health-score-status" id="health-score-status">Optimal</span>
+            </div>
+            <div class="health-metrics-grid">
+              <div class="health-metric-item">
+                <span class="health-metric-label" data-i18n="health.deadLinks">Dead Links</span>
+                <span class="health-metric-value" id="health-dead-val">0</span>
+              </div>
+              <div class="health-metric-item">
+                <span class="health-metric-label" data-i18n="health.duplicates">Duplicates</span>
+                <span class="health-metric-value" id="health-dup-val">0</span>
+              </div>
+              <div class="health-metric-item">
+                <span class="health-metric-label" data-i18n="health.uncategorized">Uncategorized</span>
+                <span class="health-metric-value" id="health-uncat-val">0</span>
+              </div>
+              <div class="health-metric-item">
+                <span class="health-metric-label" data-i18n="health.withoutTags">Without Tags</span>
+                <span class="health-metric-value" id="health-notag-val">0</span>
+              </div>
+            </div>
+            <button class="btn-primary" id="run-auto-clean-btn" style="width:100%;margin-top:var(--space-lg)">
+              <span>🚀</span>
+              <span data-i18n="health.autoClean">1-Click Auto-Clean</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- ═══════════════════════════════════
          DUPLICATE REVIEW MODAL
          ═══════════════════════════════════ -->
@@ -444,7 +536,10 @@
               <input type="url" id="edit-bm-url" required>
             </div>
             <div class="form-group">
-              <label for="edit-bm-desc" data-i18n="bookmark.descriptionLabel">Notes / Description</label>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <label for="edit-bm-desc" data-i18n="bookmark.descriptionLabel">Notes / Description</label>
+                <button type="button" class="btn-secondary btn-sm" id="summarize-bm-btn" style="padding:2px 8px;font-size:0.72rem" data-i18n="aiSummary.summarizeBtn">✨ AI Summarize</button>
+              </div>
               <textarea id="edit-bm-desc" rows="3" placeholder="Add custom notes here…"></textarea>
             </div>
             <div class="form-group">

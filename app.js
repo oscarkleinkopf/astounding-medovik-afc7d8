@@ -33,6 +33,10 @@ import {
   updateItemDescription,
   updateItemRating
 } from './src/core/read-later.js';
+import { summarizeBookmark } from './src/core/ai-summarizer.js';
+import { loadCloudConfig, saveCloudConfig, syncToGitHub, syncFromGitHub } from './src/core/cloud-sync.js';
+import { getSmartCollections, filterBySmartCollection } from './src/core/smart-collections.js';
+import { generateHealthReport, runAutoClean } from './src/core/health-report.js';
 
 /* ────────────────────────────────────
    State
@@ -57,11 +61,15 @@ const state = {
   duplicateGroups: null,         // array from findDuplicates
   // Phase 3
   semanticSearchActive: false,
-  activeTab: 'categories',       // 'categories' | 'readlater'
+  activeTab: 'categories',       // 'categories' | 'readlater' | 'gallery'
   bulkSelectActive: false,
   readLaterList: [],
   readLaterFilter: 'all',
-  editingBookmark: null
+  editingBookmark: null,
+  // Phase 4
+  activeSmartCollection: null,
+  cloudConfig: null,
+  deferredPwaPrompt: null
 };
 
 /* ────────────────────────────────────
@@ -110,8 +118,15 @@ function init() {
   // Load Read Later queue
   state.readLaterList = loadReadLater();
 
+  // Load Cloud Sync settings
+  state.cloudConfig = loadCloudConfig();
+  populateCloudConfigUI();
+
   // Event listeners
   setupEventListeners();
+
+  // Register PWA Service Worker & Install Prompt
+  initPwa();
 
   // Theme
   initTheme();
@@ -277,6 +292,30 @@ function setupEventListeners() {
   $$('.read-later-filters button, .read-later-filters .filter-pill').forEach(pill => {
     pill.addEventListener('click', () => handleReadLaterFilter(pill.dataset.rlFilter));
   });
+
+  // ══ Phase 4 Event Listeners ══
+
+  // —— PWA Install Button ──
+  $('#pwa-install-btn').addEventListener('click', handlePwaInstall);
+
+  // —— Gallery View Tab Switcher ──
+  $('#tab-gallery-btn').addEventListener('click', () => switchMainTab('gallery'));
+
+  // —— Health Report Audit Modal ──
+  $('#health-widget-btn').addEventListener('click', openHealthModal);
+  $('#health-close').addEventListener('click', closeHealthModal);
+  $('#health-modal').addEventListener('click', (e) => {
+    if (e.target === $('#health-modal')) closeHealthModal();
+  });
+  $('#run-auto-clean-btn').addEventListener('click', handleRunAutoClean);
+
+  // —— AI Summarize Button ──
+  $('#summarize-bm-btn').addEventListener('click', handleAISummarize);
+
+  // —— Cloud Sync Settings & Actions ──
+  $('#save-cloud-config-btn').addEventListener('click', handleSaveCloudConfig);
+  $('#cloud-push-btn').addEventListener('click', handleCloudPush);
+  $('#cloud-pull-btn').addEventListener('click', handleCloudPull);
 }
 
 /* ────────────────────────────────────
@@ -500,6 +539,11 @@ function renderResults(data) {
   renderStats(data);
   renderDonutChart($('#donut-chart'), data);
   $('#donut-total').textContent = totalBookmarks.toLocaleString();
+
+  // Phase 4: Smart Collections
+  try {
+    renderSmartCollectionChips();
+  } catch (e) { console.warn('[smart-collections]', e); }
 
   // Phase 2: Tags
   try {
@@ -1838,36 +1882,60 @@ function switchMainTab(tab) {
   
   const catBtn = $('#tab-categories-btn');
   const rlBtn = $('#tab-readlater-btn');
+  const galBtn = $('#tab-gallery-btn');
   const resultsContent = $('#results-content');
   const readLaterContent = $('#read-later-content');
+  const visualGridContent = $('#visual-grid-content');
   const insightsCard = $('#insights-card');
   const chartCard = $('#chart-card');
   const breakdownCard = $('#breakdown-card');
   const tagFilterBar = $('#tag-filter-bar');
+  const smartBar = $('#smart-collections-bar');
   const toolsToolbar = $('#tools-toolbar');
   
   if (tab === 'categories') {
     catBtn.classList.add('active');
     rlBtn.classList.remove('active');
+    if (galBtn) galBtn.classList.remove('active');
     resultsContent.style.display = '';
     readLaterContent.style.display = 'none';
+    if (visualGridContent) visualGridContent.style.display = 'none';
     if (insightsCard) insightsCard.style.display = '';
     if (chartCard) chartCard.style.display = '';
     if (breakdownCard) breakdownCard.style.display = '';
     if (tagFilterBar && state.tagIndex && state.tagIndex.size > 0) tagFilterBar.style.display = 'flex';
+    if (smartBar) smartBar.style.display = 'flex';
     if (toolsToolbar) toolsToolbar.style.display = 'flex';
-  } else {
+  } else if (tab === 'readlater') {
     catBtn.classList.remove('active');
     rlBtn.classList.add('active');
+    if (galBtn) galBtn.classList.remove('active');
     resultsContent.style.display = 'none';
     readLaterContent.style.display = 'block';
+    if (visualGridContent) visualGridContent.style.display = 'none';
     if (insightsCard) insightsCard.style.display = 'none';
     if (chartCard) chartCard.style.display = 'none';
     if (breakdownCard) breakdownCard.style.display = 'none';
     if (tagFilterBar) tagFilterBar.style.display = 'none';
+    if (smartBar) smartBar.style.display = 'none';
     if (toolsToolbar) toolsToolbar.style.display = 'none';
     
     renderReadLaterList();
+  } else if (tab === 'gallery') {
+    catBtn.classList.remove('active');
+    rlBtn.classList.remove('active');
+    if (galBtn) galBtn.classList.add('active');
+    resultsContent.style.display = 'none';
+    readLaterContent.style.display = 'none';
+    if (visualGridContent) visualGridContent.style.display = 'block';
+    if (insightsCard) insightsCard.style.display = 'none';
+    if (chartCard) chartCard.style.display = 'none';
+    if (breakdownCard) breakdownCard.style.display = 'none';
+    if (tagFilterBar) tagFilterBar.style.display = 'none';
+    if (smartBar) smartBar.style.display = 'flex';
+    if (toolsToolbar) toolsToolbar.style.display = 'flex';
+
+    renderVisualGrid();
   }
 }
 
@@ -2347,3 +2415,298 @@ function generateReaderContent(bookmark) {
     `;
   }
 }
+
+/* ════════════════════════════════════
+   PHASE 4 — Helper Functions
+   ════════════════════════════════════ */
+
+// —— PWA Support & Service Worker ——
+function initPwa() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then(
+        (reg) => console.log('[pwa] Service Worker registered with scope:', reg.scope),
+        (err) => console.warn('[pwa] Service Worker registration failed:', err)
+      );
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    state.deferredPwaPrompt = e;
+    $('#pwa-install-btn').style.display = 'inline-flex';
+  });
+
+  window.addEventListener('appinstalled', () => {
+    state.deferredPwaPrompt = null;
+    $('#pwa-install-btn').style.display = 'none';
+    showToast(t('pwa.installBanner') || 'App installed successfully!', 'success');
+  });
+}
+
+function handlePwaInstall() {
+  if (!state.deferredPwaPrompt) return;
+  state.deferredPwaPrompt.prompt();
+  state.deferredPwaPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === 'accepted') {
+      $('#pwa-install-btn').style.display = 'none';
+    }
+    state.deferredPwaPrompt = null;
+  });
+}
+
+// —— Smart Collections ——
+function renderSmartCollectionChips() {
+  const container = $('#smart-collections-chips');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const collections = getSmartCollections(state.bookmarks, state.readLaterList);
+
+  // Default "All" chip
+  const allChip = document.createElement('button');
+  allChip.className = `smart-chip${state.activeSmartCollection === null ? ' active' : ''}`;
+  allChip.innerHTML = `🌐 ${t('smart.all') || 'All Bookmarks'} <span class="smart-chip-count">${state.bookmarks.length}</span>`;
+  allChip.addEventListener('click', () => handleSmartCollectionClick(null));
+  container.appendChild(allChip);
+
+  collections.forEach(col => {
+    if (col.count === 0) return;
+    const chip = document.createElement('button');
+    chip.className = `smart-chip${state.activeSmartCollection === col.id ? ' active' : ''}`;
+    const label = state.language === 'es' ? col.labelEs : col.labelEn;
+    chip.innerHTML = `${col.icon} ${escapeHtml(label)} <span class="smart-chip-count">${col.count}</span>`;
+    chip.addEventListener('click', () => handleSmartCollectionClick(col.id));
+    container.appendChild(chip);
+  });
+}
+
+function handleSmartCollectionClick(id) {
+  state.activeSmartCollection = id;
+  renderSmartCollectionChips();
+
+  if (id === null) {
+    renderTreeView(state.organizedData);
+    return;
+  }
+
+  const filtered = filterBySmartCollection(state.bookmarks, id, state.readLaterList);
+  renderTreeView({ 'search-results': filtered });
+}
+
+// —— Visual Gallery Grid View ——
+function renderVisualGrid() {
+  const grid = $('#visual-gallery-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const items = state.searchQuery ? fuzzySearch(state.bookmarks, state.searchQuery) : state.bookmarks;
+
+  if (!items.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;padding:var(--space-3xl)">
+        <div class="empty-state-icon">🖼️</div>
+        <p class="empty-state-title">${t('results.visualGrid')}</p>
+        <p class="empty-state-text">${state.language === 'es' ? 'No hay marcadores para mostrar.' : 'No bookmarks to display.'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  items.forEach(bk => {
+    const domain = getDomain(bk.url);
+    const faviconUrl = bk.icon || `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+    const card = document.createElement('div');
+    card.className = 'visual-card';
+
+    const descHtml = bk.description
+      ? `<div class="visual-card-description">${escapeHtml(bk.description)}</div>`
+      : '';
+
+    card.innerHTML = `
+      <div class="visual-card-banner">
+        <div class="visual-card-banner-bg" style="background-image:url('${escapeHtml(faviconUrl)}')"></div>
+        <span class="visual-card-banner-domain">${escapeHtml(domain)}</span>
+      </div>
+      <div class="visual-card-body">
+        <div class="visual-card-header">
+          <img class="visual-card-favicon" src="${escapeHtml(faviconUrl)}" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22><rect width=%2216%22 height=%2216%22 rx=%224%22 fill=%22%23333%22/></svg>'">
+          <h4 class="visual-card-title">${escapeHtml(bk.title || domain)}</h4>
+        </div>
+        ${descHtml}
+      </div>
+      <div class="visual-card-footer">
+        <div>${bk.rating ? `<span class="star-rating-display">${'★'.repeat(bk.rating)}</span>` : ''}</div>
+        <div style="display:flex;gap:var(--space-xs)">
+          <button class="btn-secondary btn-sm" data-action="open-card-url" title="Open">🔗</button>
+          <button class="btn-secondary btn-sm" data-action="edit-card-details" title="Edit">✏️</button>
+        </div>
+      </div>
+    `;
+
+    card.querySelector('[data-action="open-card-url"]').addEventListener('click', () => {
+      window.open(bk.url, '_blank', 'noopener');
+    });
+
+    card.querySelector('[data-action="edit-card-details"]').addEventListener('click', () => {
+      openDetailsModal(bk);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// —— Executive Health Audit ——
+function openHealthModal() {
+  if (!state.bookmarks.length) {
+    showToast(t('errors.noData') || 'No bookmarks loaded.', 'warning');
+    return;
+  }
+
+  const report = generateHealthReport(state.bookmarks, state.organizedData, state.linkResults);
+
+  $('#health-score-val').textContent = `${report.healthScore}%`;
+  $('#health-score-status').textContent = state.language === 'es' ? report.statusLabelEs : report.statusLabelEn;
+  
+  const ring = $('.health-score-ring');
+  if (ring) {
+    const deg = Math.round((report.healthScore / 100) * 360);
+    ring.style.setProperty('--health-score-deg', `${deg}`);
+  }
+
+  $('#health-dead-val').textContent = report.deadCount;
+  $('#health-dup-val').textContent = report.duplicateCount;
+  $('#health-uncat-val').textContent = report.uncategorizedCount;
+  $('#health-notag-val').textContent = report.withoutTagsCount;
+
+  $('#health-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeHealthModal() {
+  $('#health-modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function handleRunAutoClean() {
+  if (!state.bookmarks.length) return;
+
+  showToast(t('health.cleaning') || 'Cleaning collection...', 'info');
+
+  const result = runAutoClean(state.bookmarks, state.organizedData, state.linkResults);
+  
+  state.bookmarks = result.cleanedBookmarks;
+  state.organizedData = result.cleanedOrganizedData;
+
+  closeHealthModal();
+  renderResults(state.organizedData);
+
+  const msg = (t('health.cleaned') || 'Cleaned {total} issues ({dead} dead, {dups} duplicates)')
+    .replace('{total}', result.totalCleaned)
+    .replace('{dead}', result.deadRemoved)
+    .replace('{dups}', result.duplicatesRemoved);
+
+  showToast(msg, 'success');
+}
+
+// —— AI Summarizer ——
+async function handleAISummarize() {
+  const bookmark = state.editingBookmark;
+  if (!bookmark) return;
+
+  if (!state.apiKey) {
+    showToast(state.language === 'es' ? 'Por favor, configura tu clave API de Gemini en Ajustes primero.' : 'Please configure your Gemini API Key in Settings first.', 'warning');
+    return;
+  }
+
+  const btn = $('#summarize-bm-btn');
+  btn.disabled = true;
+  btn.textContent = t('aiSummary.summarizing') || 'Summarizing...';
+
+  try {
+    const summary = await summarizeBookmark(bookmark, state.apiKey, state.language);
+    $('#edit-bm-desc').value = summary;
+    bookmark.description = summary;
+    showToast(t('aiSummary.generated') || 'AI summary generated!', 'success');
+  } catch (err) {
+    console.error('[ai-summarize]', err);
+    showToast(t('toast.error') || 'Failed to generate AI summary.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = t('aiSummary.summarizeBtn') || '✨ AI Summarize';
+  }
+}
+
+// —— Cloud Sync UI & Actions ——
+function populateCloudConfigUI() {
+  const cfg = state.cloudConfig;
+  if (!cfg) return;
+
+  if ($('#cloud-github-token')) $('#cloud-github-token').value = cfg.githubToken || '';
+  if ($('#cloud-github-owner')) $('#cloud-github-owner').value = cfg.githubOwner || '';
+  if ($('#cloud-github-repo')) $('#cloud-github-repo').value = cfg.githubRepo || '';
+}
+
+function handleSaveCloudConfig() {
+  const config = {
+    provider: $('#cloud-provider').value,
+    githubToken: $('#cloud-github-token').value.trim(),
+    githubOwner: $('#cloud-github-owner').value.trim(),
+    githubRepo: $('#cloud-github-repo').value.trim(),
+    autoSync: false
+  };
+
+  state.cloudConfig = config;
+  saveCloudConfig(config);
+  showToast(state.language === 'es' ? '¡Configuración de nube guardada!' : 'Cloud settings saved!', 'success');
+}
+
+async function handleCloudPush() {
+  const cfg = state.cloudConfig;
+  if (!cfg || !cfg.githubToken || !cfg.githubOwner || !cfg.githubRepo) {
+    showToast(state.language === 'es' ? 'Configura tus credenciales de GitHub primero.' : 'Configure your GitHub credentials first.', 'warning');
+    return;
+  }
+
+  if (!state.organizedData) {
+    showToast(t('errors.noData') || 'No data to sync.', 'warning');
+    return;
+  }
+
+  showToast(t('cloud.pushing') || 'Pushing to cloud...', 'info');
+
+  try {
+    await syncToGitHub(state.organizedData, cfg.githubToken, cfg.githubOwner, cfg.githubRepo);
+    showToast(t('cloud.pushed') || 'Collection synced to cloud!', 'success');
+  } catch (err) {
+    console.error('[cloud-push]', err);
+    showToast(t('toast.error') || 'Cloud push failed.', 'error');
+  }
+}
+
+async function handleCloudPull() {
+  const cfg = state.cloudConfig;
+  if (!cfg || !cfg.githubToken || !cfg.githubOwner || !cfg.githubRepo) {
+    showToast(state.language === 'es' ? 'Configura tus credenciales de GitHub primero.' : 'Configure your GitHub credentials first.', 'warning');
+    return;
+  }
+
+  showToast(t('cloud.pulling') || 'Pulling from cloud...', 'info');
+
+  try {
+    const data = await syncFromGitHub(cfg.githubToken, cfg.githubOwner, cfg.githubRepo);
+    state.organizedData = data;
+    
+    // Rebuild flat bookmarks array
+    state.bookmarks = [];
+    Object.values(state.organizedData).forEach(bks => state.bookmarks.push(...bks));
+
+    showView('results');
+    renderResults(state.organizedData);
+    showToast(t('cloud.pulled') || 'Collection restored from cloud!', 'success');
+  } catch (err) {
+    console.error('[cloud-pull]', err);
+    showToast(t('toast.error') || 'Cloud pull failed.', 'error');
+  }
+}
+

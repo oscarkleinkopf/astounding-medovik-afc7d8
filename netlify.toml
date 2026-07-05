@@ -27,3 +27,17 @@
   for = "/*.css"
   [headers.values]
     Cache-Control = "public, max-age=604800, must-revalidate"
+
+# Service Worker header (must not be cached aggressively)
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Manifest header
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
+    Cache-Control = "public, max-age=86400"
+
