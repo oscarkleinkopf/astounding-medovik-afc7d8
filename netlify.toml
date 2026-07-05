@@ -1,0 +1,29 @@
+# ============================================================
+# BookmarkIQ — Netlify Deployment Configuration
+# ============================================================
+
+[build]
+  publish = "."
+
+# Custom headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Content Security Policy to allow Gemini API connection, Internet Archive Wayback check, Google Favicons, and Google Fonts
+    Content-Security-Policy = "default-src 'self' https://generativelanguage.googleapis.com https://archive.org https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://www.google.com https://*.google.com; script-src 'self' 'unsafe-inline'; frame-ancestors 'none';"
+
+# Cache optimization for JS modules
+[[headers]]
+  for = "/src/core/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, must-revalidate"
+
+# Cache optimization for CSS
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, must-revalidate"

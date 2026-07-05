@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookmarkIQ — Smart Bookmark Organizer</title>
+  <meta name="description" content="Organize your browser bookmarks intelligently with AI-powered categorization">
+  <meta name="theme-color" content="#06060f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ═══════════════════════════════════
+         HEADER
+         ═══════════════════════════════════ -->
+    <header id="app-header">
+      <div class="header-inner">
+        <div class="logo-area">
+          <span class="logo-icon">📑</span>
+          <span class="logo-text">BookmarkIQ</span>
+          <span class="logo-subtitle" data-i18n="header.subtitle">Smart Organizer</span>
+        </div>
+        <div class="header-actions">
+          <div class="language-switcher">
+            <select id="language-select" aria-label="Language">
+              <option value="en">🇺🇸 EN</option>
+              <option value="es">🇪🇸 ES</option>
+            </select>
+          </div>
+          <button class="btn-icon" id="settings-btn" aria-label="Settings" title="Settings">
+            ⚙️
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-content">
+      <!-- ═══════════════════════════════════
+           UPLOAD SECTION
+           ═══════════════════════════════════ -->
+      <section id="upload-section">
+        <div id="drop-zone" role="button" tabindex="0" aria-label="Drop your bookmarks file here or click to browse">
+          <div class="drop-zone-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <h2 class="drop-zone-title" data-i18n="upload.title">Drop your bookmarks file here</h2>
+          <p class="drop-zone-subtitle" data-i18n="upload.subtitle">or click to browse</p>
+          <span class="drop-zone-formats" data-i18n="upload.formats">Supports Chrome, Firefox, Edge, Brave, Safari exports (.html)</span>
+        </div>
+
+        <input type="file" id="file-input" accept=".html,.htm" aria-hidden="true">
+
+        <div class="upload-divider" aria-hidden="true"><span data-i18n="upload.or">or</span></div>
+
+        <button class="btn-secondary" id="demo-button">
+          <span>✨</span>
+          <span data-i18n="upload.demo">Try with sample bookmarks</span>
+        </button>
+      </section>
+
+      <!-- ═══════════════════════════════════
+           PROCESSING SECTION
+           ═══════════════════════════════════ -->
+      <section id="processing-section" aria-live="polite">
+        <div class="loader-spinner" aria-hidden="true"></div>
+        <p class="processing-status" id="processing-status" data-i18n="processing.parsing">Parsing bookmarks…</p>
+        <p class="processing-substatus" id="processing-substatus" data-i18n="processing.wait">This may take a moment</p>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-bar-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div class="skeleton-group" aria-hidden="true">
+          <div class="skeleton h-lg w-75"></div>
+          <div class="skeleton w-90"></div>
+          <div class="skeleton w-50"></div>
+          <div class="skeleton w-75"></div>
+          <div class="skeleton w-90"></div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════
+           RESULTS SECTION
+           ═══════════════════════════════════ -->
+      <section id="results-section" aria-label="Organized bookmarks results">
+        <!-- Results header -->
+        <div class="results-header">
+          <div class="results-summary-group">
+            <div class="results-summary">
+              <h2 class="results-title" data-i18n="results.title">Organized Bookmarks</h2>
+              <span class="results-count" id="results-count"></span>
+            </div>
+            <div class="view-switcher-tabs">
+              <button class="view-tab active" id="tab-categories-btn">📁 <span data-i18n="results.categories">Categories</span></button>
+              <button class="view-tab" id="tab-readlater-btn">📖 <span data-i18n="readLater.title">Read Later</span></button>
+            </div>
+          </div>
+          <div class="results-actions">
+            <div class="search-bar">
+              <span class="search-bar-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <input type="text" id="search-input" placeholder="Search bookmarks…" data-i18n-placeholder="results.searchPlaceholder">
+              <button class="search-clear" id="search-clear" aria-label="Clear search">×</button>
+              <button class="btn-semantic-toggle" id="semantic-search-btn" title="Toggle Semantic AI Search" data-i18n="search.semanticToggle">🧠 AI</button>
+            </div>
+            <button class="btn-secondary btn-sm" id="bulk-select-btn">🗳️ <span data-i18n="action.selectAll">Select</span></button>
+            <button class="btn-secondary btn-sm" id="expand-all-btn" data-i18n="results.expandAll">Expand All</button>
+            <button class="btn-secondary btn-sm" id="collapse-all-btn" data-i18n="results.collapseAll">Collapse All</button>
+            <button class="btn-primary btn-sm" id="export-btn">
+              <span>📥</span>
+              <span data-i18n="results.export">Export</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tools toolbar -->
+        <div class="tools-toolbar" id="tools-toolbar">
+          <button class="tool-btn" id="check-links-btn" title="Check broken links">
+            <span>🔗</span>
+            <span data-i18n="linkChecker.checkLinks">Check Links</span>
+          </button>
+          <button class="tool-btn" id="find-duplicates-btn" title="Find duplicate bookmarks">
+            <span>🔄</span>
+            <span data-i18n="duplicates.findDuplicates">Find Duplicates</span>
+          </button>
+          <button class="tool-btn" id="create-backup-btn" title="Create JSON backup">
+            <span>💾</span>
+            <span data-i18n="backup.create">Create Backup</span>
+          </button>
+          <button class="tool-btn" id="restore-backup-btn" title="Restore from backup">
+            <span>📂</span>
+            <span data-i18n="backup.restore">Restore Backup</span>
+          </button>
+          <input type="file" id="backup-file-input" accept=".json" aria-hidden="true" style="display:none">
+          <!-- Link scan progress -->
+          <div class="tool-progress" id="link-scan-progress" style="display:none">
+            <span class="tool-progress-text" id="link-scan-text">Scanning...</span>
+            <div class="tool-progress-bar"><div class="tool-progress-fill" id="link-scan-fill"></div></div>
+            <button class="tool-btn tool-btn-cancel" id="cancel-scan-btn" title="Cancel">✕</button>
+          </div>
+          <!-- Link filter pills -->
+          <div class="link-filter-pills" id="link-filter-pills" style="display:none">
+            <button class="filter-pill active" data-filter="all" data-i18n="linkChecker.filterAll">All</button>
+            <button class="filter-pill filter-alive" data-filter="alive">✅ <span data-i18n="linkChecker.filterAlive">Alive</span></button>
+            <button class="filter-pill filter-dead" data-filter="dead">❌ <span data-i18n="linkChecker.filterDead">Dead</span></button>
+            <button class="filter-pill filter-unknown" data-filter="unknown">⚠️ <span data-i18n="linkChecker.filterUnknown">Unknown</span></button>
+            <button class="filter-pill filter-remove-dead" id="remove-dead-btn">🗑️ <span data-i18n="linkChecker.removeDead">Remove Dead</span></button>
+          </div>
+        </div>
+
+        <!-- Tag filter bar -->
+        <div class="tag-filter-bar" id="tag-filter-bar" style="display:none">
+          <span class="tag-filter-label" data-i18n="tags.popular">Popular Tags</span>
+          <div class="tag-cloud" id="tag-cloud"></div>
+          <button class="tag-clear-btn" id="tag-clear-btn" style="display:none" data-i18n="tags.clearFilter">Clear filter</button>
+        </div>
+
+        <!-- Two-column results layout -->
+        <div id="results-content">
+          <!-- Left: bookmark tree -->
+          <div id="tree-container" aria-label="Bookmark categories tree"></div>
+
+          <!-- Right: stats -->
+          <aside id="stats-container" aria-label="Statistics">
+            <!-- Donut chart card -->
+            <div class="stats-card" id="chart-card">
+              <h3 class="stats-card-title" data-i18n="stats.distribution">Distribution</h3>
+              <div class="donut-chart-wrapper">
+                <canvas id="donut-chart" width="180" height="180" aria-label="Category distribution chart"></canvas>
+                <div class="donut-center-text">
+                  <div class="donut-center-number" id="donut-total">0</div>
+                  <div class="donut-center-label" data-i18n="stats.bookmarks">Bookmarks</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category breakdown card -->
+            <div class="stats-card" id="breakdown-card">
+              <h3 class="stats-card-title" data-i18n="stats.breakdown">Category Breakdown</h3>
+              <div id="stats-breakdown"></div>
+            </div>
+          </aside>
+        </div>
+
+        <!-- Read Later List Layout -->
+        <div id="read-later-content" style="display:none">
+          <div class="read-later-header">
+            <div class="read-later-filters">
+              <button class="filter-pill active" data-rl-filter="all">All</button>
+              <button class="filter-pill" data-rl-filter="unread" data-i18n="readLater.unread">Unread</button>
+              <button class="filter-pill" data-rl-filter="reading" data-i18n="readLater.reading">Reading</button>
+              <button class="filter-pill" data-rl-filter="completed" data-i18n="readLater.completed">Completed</button>
+            </div>
+          </div>
+          <div class="read-later-grid" id="read-later-grid"></div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="analytics-section" id="analytics-section">
+          <div class="analytics-tabs" role="tablist">
+            <button class="analytics-tab active" data-analytics="treemap" role="tab" aria-selected="true" data-i18n="analytics.treemap">Treemap</button>
+            <button class="analytics-tab" data-analytics="timeline" role="tab" aria-selected="false" data-i18n="analytics.timeline">Timeline</button>
+            <button class="analytics-tab" data-analytics="topdomains" role="tab" aria-selected="false" data-i18n="analytics.topDomains">Top Domains</button>
+          </div>
+          <div class="analytics-canvas-container">
+            <canvas id="analytics-canvas" width="700" height="350"></canvas>
+          </div>
+          <!-- Insights card -->
+          <div class="insights-card" id="insights-card">
+            <h3 class="stats-card-title" data-i18n="analytics.insights">Insights</h3>
+            <div class="insights-grid" id="insights-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════
+           EXPORT SECTION
+           ═══════════════════════════════════ -->
+      <section id="export-section" aria-label="Export options">
+        <div class="export-card">
+          <div class="form-group">
+            <label for="export-filename" data-i18n="export.filenameLabel">Filename</label>
+            <input type="text" id="export-filename" value="bookmarks_organized.html">
+          </div>
+          <button class="btn-primary" id="download-btn">
+            <span>⬇️</span>
+            <span data-i18n="export.download">Download Organized Bookmarks</span>
+          </button>
+          <button class="btn-secondary btn-danger" id="download-clear-btn" style="margin-top:var(--space-sm);width:100%">
+            <span>🔒</span>
+            <span data-i18n="export.downloadClear">Download & Clear Session (Secure)</span>
+          </button>
+          <p class="export-info" data-i18n="export.info">The exported file can be re-imported into any major browser.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ═══════════════════════════════════
+         SETTINGS MODAL
+         ═══════════════════════════════════ -->
+    <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title" id="settings-title" data-i18n="settings.title">Settings</h2>
+          <button class="modal-close" id="settings-close" aria-label="Close settings">×</button>
+        </div>
+
+        <div class="modal-tabs" role="tablist">
+          <button class="modal-tab active" data-tab="general" role="tab" aria-selected="true" data-i18n="settings.generalTab">General</button>
+          <button class="modal-tab" data-tab="ai" role="tab" aria-selected="false" data-i18n="settings.aiTab">AI</button>
+          <button class="modal-tab" data-tab="categories" role="tab" aria-selected="false" data-i18n="settings.categoriesTab">Categories</button>
+          <button class="modal-tab" data-tab="tags" role="tab" aria-selected="false" data-i18n="tags.title">Tags</button>
+          <button class="modal-tab" data-tab="appearance" role="tab" aria-selected="false">🎨</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- General Tab -->
+          <div class="tab-panel active" id="panel-general" role="tabpanel">
+            <div class="form-group">
+              <label for="settings-language" data-i18n="settings.language">Language</label>
+              <select id="settings-language">
+                <option value="en">🇺🇸 English</option>
+                <option value="es">🇪🇸 Español</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Appearance Tab -->
+          <div class="tab-panel" id="panel-appearance" role="tabpanel">
+            <p class="settings-description" data-i18n="themes.title">Theme</p>
+            <div class="theme-picker" id="theme-picker">
+              <!-- Populated dynamically by JS -->
+            </div>
+          </div>
+
+          <!-- AI Tab -->
+          <div class="tab-panel" id="panel-ai" role="tabpanel">
+            <p class="settings-description" data-i18n="settings.aiDescription">
+              Get smarter categorization by connecting Google AI. The Gemini API is free to use for reasonable volumes.
+            </p>
+            <div class="form-group">
+              <label for="api-key-input" data-i18n="settings.apiKeyLabel">Gemini API Key</label>
+              <input type="password" id="api-key-input" placeholder="AIza…">
+            </div>
+            <div style="display:flex;gap:var(--space-sm);align-items:center;flex-wrap:wrap">
+              <button class="btn-primary btn-sm" id="save-api-key-btn" data-i18n="settings.saveKey">Save & Test</button>
+              <button class="btn-secondary btn-sm" id="clear-api-key-btn" data-i18n="settings.clearKey">Clear Key</button>
+              <div class="api-key-status disconnected" id="api-key-status">
+                <span>●</span>
+                <span data-i18n="settings.notConnected">Not connected</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="settings-link" data-i18n="settings.getKey">🔑 Get a free API key from Google AI Studio →</a>
+          </div>
+
+          <!-- Categories Tab -->
+          <div class="tab-panel" id="panel-categories" role="tabpanel">
+            <p class="settings-description" data-i18n="settings.categoriesDescription">
+              Add custom categories to better match your bookmark collection. Custom categories are checked before defaults.
+            </p>
+
+            <div id="custom-categories-list">
+              <!-- dynamically populated -->
+            </div>
+
+            <div class="divider"></div>
+
+            <h3 class="stats-card-title" data-i18n="settings.addCategory">Add Category</h3>
+
+            <form id="add-category-form">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md)">
+                <div class="form-group">
+                  <label for="cat-name-en" data-i18n="settings.nameEn">Name (English)</label>
+                  <input type="text" id="cat-name-en" placeholder="e.g. Cooking" required>
+                </div>
+                <div class="form-group">
+                  <label for="cat-name-es" data-i18n="settings.nameEs">Name (Español)</label>
+                  <input type="text" id="cat-name-es" placeholder="e.g. Cocina">
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr auto;gap:var(--space-md)">
+                <div class="form-group">
+                  <label for="cat-emoji" data-i18n="settings.emoji">Emoji</label>
+                  <input type="text" id="cat-emoji" placeholder="🍳" maxlength="4">
+                </div>
+                <div class="form-group">
+                  <label for="cat-color" data-i18n="settings.color">Color</label>
+                  <input type="color" id="cat-color" value="#667eea">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="cat-domains" data-i18n="settings.domains">Domains (one per line)</label>
+                <textarea id="cat-domains" placeholder="allrecipes.com&#10;food.com" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="cat-keywords" data-i18n="settings.keywords">Keywords (one per line)</label>
+                <textarea id="cat-keywords" placeholder="recipe&#10;cooking&#10;chef" rows="3"></textarea>
+              </div>
+              <button type="submit" class="btn-primary btn-sm" data-i18n="settings.addBtn">Add Category</button>
+            </form>
+          </div>
+
+          <!-- Tags Tab -->
+          <div class="tab-panel" id="panel-tags" role="tabpanel">
+            <p class="settings-description" data-i18n="tags.bulkTagTitle">
+              Manage your bookmark tags globally. You can merge multiple tags or rename tags globally.
+            </p>
+            <div class="form-group">
+              <label data-i18n="tags.mergeBtn">Merge Tags</label>
+              <div class="input-inline-group" style="display:flex;gap:var(--space-sm);margin-top:var(--space-xs)">
+                <input type="text" id="merge-source-tag" placeholder="Source tag" data-i18n-placeholder="tags.sourceTag">
+                <input type="text" id="merge-target-tag" placeholder="Target tag" data-i18n-placeholder="tags.targetTag">
+                <button class="btn-primary btn-sm" id="merge-tags-btn" data-i18n="tags.mergeBtn">Merge</button>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="form-group">
+              <label data-i18n="tags.renameBtn">Rename Tag</label>
+              <div class="input-inline-group" style="display:flex;gap:var(--space-sm);margin-top:var(--space-xs)">
+                <input type="text" id="rename-old-tag" placeholder="Old tag name" data-i18n-placeholder="tags.sourceTag">
+                <input type="text" id="rename-new-tag" placeholder="New tag name" data-i18n-placeholder="tags.newTagName">
+                <button class="btn-primary btn-sm" id="rename-tag-btn" data-i18n="tags.renameBtn">Rename</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TOAST CONTAINER
+         ═══════════════════════════════════ -->
+    <!-- ═══════════════════════════════════
+         DUPLICATE REVIEW MODAL
+         ═══════════════════════════════════ -->
+    <div class="modal-overlay" id="duplicate-modal" role="dialog" aria-modal="true" aria-labelledby="duplicate-title">
+      <div class="modal-card modal-card-lg">
+        <div class="modal-header">
+          <h2 class="modal-title" id="duplicate-title" data-i18n="duplicates.title">Duplicate Bookmarks</h2>
+          <button class="modal-close" id="duplicate-close" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="duplicate-actions-bar">
+            <span class="duplicate-count" id="duplicate-count"></span>
+            <button class="btn-primary btn-sm" id="auto-merge-btn" data-i18n="duplicates.autoMerge">Auto-Resolve All</button>
+          </div>
+          <div id="duplicate-groups-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-container" aria-live="polite" aria-relevant="additions"></div>
+
+    <!-- ═══════════════════════════════════
+         CONTEXT MENU
+         ═══════════════════════════════════ -->
+    <div id="context-menu" role="menu">
+      <button class="context-menu-item" data-action="open" role="menuitem">🔗 <span data-i18n="context.open">Open URL</span></button>
+      <button class="context-menu-item" data-action="readlater" role="menuitem">📖 <span data-i18n="readLater.addToQueue">Add to Read Later</span></button>
+      <button class="context-menu-item" data-action="edit" role="menuitem">✏️ <span data-i18n="bookmark.editDetails">Edit Details</span></button>
+      <button class="context-menu-item" data-action="move" role="menuitem">📂 <span data-i18n="context.move">Move to…</span></button>
+      <div class="context-menu-divider"></div>
+      <button class="context-menu-item danger" data-action="delete" role="menuitem">🗑️ <span data-i18n="context.delete">Delete</span></button>
+    </div>
+
+    <!-- Floating Bulk Edit Bar -->
+    <div class="bulk-edit-bar" id="bulk-edit-bar" style="display:none">
+      <div class="bulk-info">
+        <span id="bulk-selected-count">0</span> <span data-i18n="action.selectAll">selected</span>
+      </div>
+      <div class="bulk-actions">
+        <button class="btn-secondary btn-sm" id="bulk-tag-btn">🏷️ Tag</button>
+        <button class="btn-secondary btn-sm" id="bulk-move-btn">📂 Move</button>
+        <button class="btn-secondary btn-sm btn-danger" id="bulk-delete-btn">🗑️ Delete</button>
+        <button class="btn-icon" id="bulk-cancel-btn" title="Cancel selection">✕</button>
+      </div>
+    </div>
+
+    <!-- Bookmark Details Modal -->
+    <div class="modal-overlay" id="details-modal" role="dialog" aria-modal="true" aria-labelledby="details-modal-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title" id="details-modal-title" data-i18n="bookmark.editDetails">Edit Bookmark Details</h2>
+          <button class="modal-close" id="details-close" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body">
+          <form id="edit-details-form">
+            <div class="form-group">
+              <label for="edit-bm-title" data-i18n="bookmark.title">Title</label>
+              <input type="text" id="edit-bm-title" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-bm-url" data-i18n="bookmark.url">URL</label>
+              <input type="url" id="edit-bm-url" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-bm-desc" data-i18n="bookmark.descriptionLabel">Notes / Description</label>
+              <textarea id="edit-bm-desc" rows="3" placeholder="Add custom notes here…"></textarea>
+            </div>
+            <div class="form-group">
+              <label data-i18n="bookmark.ratingLabel">Rating</label>
+              <div class="star-rating-input">
+                <input type="radio" name="stars" id="star-5" value="5"><label for="star-5">★</label>
+                <input type="radio" name="stars" id="star-4" value="4"><label for="star-4">★</label>
+                <input type="radio" name="stars" id="star-3" value="3"><label for="star-3">★</label>
+                <input type="radio" name="stars" id="star-2" value="2"><label for="star-2">★</label>
+                <input type="radio" name="stars" id="star-1" value="1"><label for="star-1">★</label>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" data-i18n="bookmark.saveDetails">Save Details</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reader Mode Overlay -->
+    <div class="reader-overlay" id="reader-overlay" style="display:none">
+      <div class="reader-container">
+        <header class="reader-header">
+          <button class="btn-secondary btn-sm" id="reader-close-btn" data-i18n="readLater.closeReader">← Close Reader</button>
+          <span class="reader-metadata" id="reader-meta">5 min read</span>
+        </header>
+        <article class="reader-article">
+          <h1 class="reader-title" id="reader-title">Article Title</h1>
+          <div class="reader-content" id="reader-content-body">
+            <!-- Populated dynamically -->
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

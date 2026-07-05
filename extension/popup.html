@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=380">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header>
+      <h1>📑 BookmarkIQ</h1>
+      <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+    </header>
+
+    <!-- Home View -->
+    <div id="home-view">
+      <div class="stats-summary">
+        <div class="stats-number" id="total-count">--</div>
+        <div class="stats-label">bookmarks found</div>
+      </div>
+      <button id="organize-btn" class="primary-btn">🧠 Organize My Bookmarks</button>
+      <p class="hint">This will analyze and reorganize your bookmarks into smart categories</p>
+    </div>
+
+    <!-- Processing View -->
+    <div id="processing-view" class="hidden">
+      <div class="spinner"></div>
+      <p id="processing-status">Analyzing bookmarks...</p>
+      <div class="progress-bar">
+        <div id="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Preview View -->
+    <div id="preview-view" class="hidden">
+      <h2>Preview Changes</h2>
+      <div id="preview-tree"></div>
+      <div class="action-buttons">
+        <button id="apply-btn" class="primary-btn">✅ Apply Changes</button>
+        <button id="cancel-btn" class="secondary-btn">Cancel</button>
+        <button id="export-btn" class="secondary-btn">💾 Export Only</button>
+      </div>
+      <p class="warning">⚠️ A backup will be created before applying changes</p>
+    </div>
+
+    <!-- Done View -->
+    <div id="done-view" class="hidden">
+      <div class="success-icon">✅</div>
+      <h2>Bookmarks Organized!</h2>
+      <p id="done-summary"></p>
+      <button id="undo-btn" class="secondary-btn">↩️ Undo Changes</button>
+    </div>
+
+    <!-- Settings View -->
+    <div id="settings-view" class="hidden">
+      <div class="settings-header">
+        <button id="back-btn" class="icon-btn">← Back</button>
+        <h2>Settings</h2>
+      </div>
+
+      <div class="setting-group">
+        <label>Language</label>
+        <select id="lang-select">
+          <option value="en">🇺🇸 English</option>
+          <option value="es">🇪🇸 Español</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label>AI Enhancement (Optional)</label>
+        <p class="setting-description">Get smarter categorization by connecting Google AI. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Get a free key →</a></p>
+        <div class="api-key-row">
+          <input type="password" id="api-key-input" placeholder="Paste your API key here">
+          <button id="save-key-btn" class="small-btn">Save</button>
+        </div>
+        <span id="key-status"></span>
+      </div>
+
+      <div class="setting-group">
+        <label>Auto-organize new bookmarks</label>
+        <label class="toggle">
+          <input type="checkbox" id="auto-organize">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
