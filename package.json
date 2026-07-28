@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Smart bookmark organizer",
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test tests/*.test.js",
     "check": "node scripts/check.mjs"
   },
   "engines": {
