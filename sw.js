@@ -2,7 +2,7 @@
    BookmarkIQ — Service Worker (Offline Cache & PWA Support)
    ============================================================ */
 
-const CACHE_NAME = 'bookmarkiq-v3';
+const CACHE_NAME = 'bookmarkiq-v4';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -54,6 +54,8 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event — stale-while-revalidate or cache-first for app shell
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
 
   // Bypass API calls (Gemini, Wayback, GitHub, Google Drive, Favicons)
@@ -63,6 +65,25 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('github.com') ||
     url.hostname.includes('google.com')
   ) {
+    return;
+  }
+
+  const isApplicationCode = url.origin === self.location.origin && (
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.html') ||
+    url.pathname === '/' ||
+    url.pathname === ''
+  );
+
+  if (isApplicationCode) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+        }
+        return networkResponse;
+      }).catch(() => caches.match(event.request))
+    );
     return;
   }
 

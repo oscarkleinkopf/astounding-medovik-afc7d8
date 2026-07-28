@@ -1,0 +1,14 @@
+{
+  "name": "bookmarkiq",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Smart bookmark organizer",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check.mjs"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
