@@ -8,8 +8,8 @@
 // Constants
 // ---------------------------------------------------------------------------
 
-/** localStorage key where the user's API key is persisted. */
-const API_KEY_STORAGE_KEY = 'bookmarkOrganizer_apiKey';
+/** Session storage key where the user's API key is retained. */
+const API_KEY_SESSION_KEY = 'bookmarkOrganizer_apiKey_session';
 
 /** Gemini REST API endpoint (v1beta, Gemini 2.0 Flash). */
 const API_BASE_URL =
@@ -283,13 +283,13 @@ export async function testApiKey(apiKey) {
 }
 
 /**
- * Checks whether an API key is stored in localStorage.
+ * Checks whether an API key is available in the current browser session.
  *
  * @returns {boolean} `true` if a non‑empty API key is present.
  */
 export function isAvailable() {
   try {
-    const key = localStorage.getItem(API_KEY_STORAGE_KEY);
+    const key = sessionStorage.getItem(API_KEY_SESSION_KEY);
     return typeof key === 'string' && key.trim().length > 0;
   } catch {
     return false;
