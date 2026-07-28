@@ -22,6 +22,15 @@ import {
   mergeTags,
   renameTag
 } from '../src/core/tag-manager.js';
+import { loadCloudConfig, saveCloudConfig } from '../src/core/cloud-sync.js';
+
+const storage = new Map();
+globalThis.localStorage = {
+  getItem: (key) => storage.get(key) ?? null,
+  setItem: (key, value) => storage.set(key, String(value)),
+  removeItem: (key) => storage.delete(key),
+  clear: () => storage.clear()
+};
 
 describe('bookmark categorization', () => {
   it('uses a known domain and preserves classification metadata', () => {
@@ -97,5 +106,25 @@ describe('tag operations', () => {
     assert.equal(renameTag(bookmarks, 'web', 'frontend'), true);
     assert.equal(bulkAddTag(bookmarks, new Set(['one', 'two']), 'Code'), 2);
     assert.equal(bulkRemoveTag(bookmarks, ['one'], 'code'), 1);
+  });
+});
+
+describe('cloud sync configuration', () => {
+  it('persists repository metadata without a personal access token', () => {
+    storage.clear();
+    saveCloudConfig({
+      provider: 'github',
+      githubToken: 'sensitive-token',
+      githubOwner: 'bookmarkiq',
+      githubRepo: 'private-backups'
+    });
+
+    assert.deepEqual(loadCloudConfig(), {
+      provider: 'github',
+      githubOwner: 'bookmarkiq',
+      githubRepo: 'private-backups',
+      autoSync: false
+    });
+    assert.equal(storage.get('bookmarkOrganizer_cloudConfig').includes('sensitive-token'), false);
   });
 });
