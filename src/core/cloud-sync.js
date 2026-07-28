@@ -1,10 +1,16 @@
 /**
  * @module cloud-sync
- * @description Provides 100% client-side cloud backup and synchronization
- * supporting GitHub Repositories/Gists and Google Drive API.
+ * @description Provides client-side cloud backup and synchronization
+ * through GitHub repositories.
  */
 
 const CONFIG_KEY = 'bookmarkOrganizer_cloudConfig';
+const DEFAULT_CONFIG = {
+  provider: 'github',
+  githubOwner: '',
+  githubRepo: '',
+  autoSync: false
+};
 
 /**
  * Loads saved cloud synchronization settings from localStorage.
@@ -13,9 +19,22 @@ const CONFIG_KEY = 'bookmarkOrganizer_cloudConfig';
 export function loadCloudConfig() {
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
-    return raw ? JSON.parse(raw) : { provider: 'github', githubToken: '', githubOwner: '', githubRepo: '', autoSync: false };
+    if (!raw) return { ...DEFAULT_CONFIG };
+
+    const parsed = JSON.parse(raw);
+    const config = {
+      ...DEFAULT_CONFIG,
+      provider: parsed.provider === 'github' ? 'github' : 'github',
+      githubOwner: typeof parsed.githubOwner === 'string' ? parsed.githubOwner : '',
+      githubRepo: typeof parsed.githubRepo === 'string' ? parsed.githubRepo : '',
+      autoSync: false
+    };
+
+    // Migrate legacy configurations that persisted a personal access token.
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    return config;
   } catch {
-    return { provider: 'github', githubToken: '', githubOwner: '', githubRepo: '', autoSync: false };
+    return { ...DEFAULT_CONFIG };
   }
 }
 
@@ -25,7 +44,13 @@ export function loadCloudConfig() {
  */
 export function saveCloudConfig(config) {
   try {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({
+      ...DEFAULT_CONFIG,
+      provider: config?.provider === 'github' ? 'github' : 'github',
+      githubOwner: typeof config?.githubOwner === 'string' ? config.githubOwner : '',
+      githubRepo: typeof config?.githubRepo === 'string' ? config.githubRepo : '',
+      autoSync: false
+    }));
   } catch (err) {
     console.error('[cloud-sync] Failed to save config:', err);
   }
@@ -64,7 +89,7 @@ export async function syncToGitHub(organizedData, token, owner, repo) {
   }
 
   const path = 'bookmarkiq_backup.json';
-  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path}`;
   
   const payloadData = {
     version: '3.0',
@@ -109,8 +134,7 @@ export async function syncToGitHub(organizedData, token, owner, repo) {
   });
 
   if (!putRes.ok) {
-    const errorText = await putRes.text();
-    throw new Error(`GitHub API push failed (${putRes.status}): ${errorText}`);
+    throw new Error(`GitHub API push failed (${putRes.status}). Verify repository access and token permissions.`);
   }
 
   return await putRes.json();
@@ -130,7 +154,7 @@ export async function syncFromGitHub(token, owner, repo) {
   }
 
   const path = 'bookmarkiq_backup.json';
-  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path}`;
 
   const res = await fetch(apiUrl, {
     headers: {
@@ -146,6 +170,17 @@ export async function syncFromGitHub(token, owner, repo) {
   const fileData = await res.json();
   const jsonText = base64ToUtf8(fileData.content);
   const parsed = JSON.parse(jsonText);
+  const organizedData = parsed.organizedData || parsed;
 
-  return parsed.organizedData || parsed;
+  if (!organizedData || typeof organizedData !== 'object' || Array.isArray(organizedData)) {
+    throw new Error('Cloud backup does not contain a valid bookmark collection.');
+  }
+
+  for (const [category, bookmarks] of Object.entries(organizedData)) {
+    if (!Array.isArray(bookmarks) || bookmarks.some((bookmark) => !bookmark || typeof bookmark !== 'object')) {
+      throw new Error(`Cloud backup category "${category}" is invalid.`);
+    }
+  }
+
+  return organizedData;
 }

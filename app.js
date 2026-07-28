@@ -72,6 +72,9 @@ const state = {
   deferredPwaPrompt: null
 };
 
+const API_KEY_SESSION_KEY = 'bookmarkOrganizer_apiKey_session';
+const CLOUD_TOKEN_SESSION_KEY = 'bookmarkOrganizer_githubToken_session';
+
 /* ────────────────────────────────────
    DOM Cache
    ──────────────────────────────────── */
@@ -108,10 +111,10 @@ function init() {
   const stored = loadCustomCategories();
   if (stored && stored.length) state.customCategories = stored;
 
-  // API key
-  state.apiKey = localStorage.getItem('bookmarkOrganizer_apiKey') || null;
+  // API key: migrate legacy persistent storage, then retain only for this session.
+  localStorage.removeItem('bookmarkOrganizer_apiKey');
+  state.apiKey = sessionStorage.getItem(API_KEY_SESSION_KEY) || null;
   if (state.apiKey) {
-    $('#api-key-input').value = state.apiKey;
     setApiKeyStatus(true);
   }
 
@@ -119,7 +122,10 @@ function init() {
   state.readLaterList = loadReadLater();
 
   // Load Cloud Sync settings
-  state.cloudConfig = loadCloudConfig();
+  state.cloudConfig = {
+    ...loadCloudConfig(),
+    githubToken: sessionStorage.getItem(CLOUD_TOKEN_SESSION_KEY) || ''
+  };
   populateCloudConfigUI();
 
   // Event listeners
@@ -1024,7 +1030,8 @@ async function handleApiKeySave() {
     const valid = await testApiKey(key);
     if (valid) {
       state.apiKey = key;
-      localStorage.setItem('bookmarkOrganizer_apiKey', key);
+      sessionStorage.setItem(API_KEY_SESSION_KEY, key);
+      $('#api-key-input').value = '';
       setApiKeyStatus(true);
       showToast(t('toast.keyValid') || 'API key is valid!', 'success');
     } else {
@@ -1040,6 +1047,7 @@ async function handleApiKeySave() {
 function handleApiKeyClear() {
   state.apiKey = null;
   localStorage.removeItem('bookmarkOrganizer_apiKey');
+  sessionStorage.removeItem(API_KEY_SESSION_KEY);
   $('#api-key-input').value = '';
   setApiKeyStatus(false);
   showToast(t('toast.keyCleared') || 'API key cleared.', 'info');
@@ -2642,7 +2650,6 @@ function populateCloudConfigUI() {
   const cfg = state.cloudConfig;
   if (!cfg) return;
 
-  if ($('#cloud-github-token')) $('#cloud-github-token').value = cfg.githubToken || '';
   if ($('#cloud-github-owner')) $('#cloud-github-owner').value = cfg.githubOwner || '';
   if ($('#cloud-github-repo')) $('#cloud-github-repo').value = cfg.githubRepo || '';
 }
@@ -2650,7 +2657,7 @@ function populateCloudConfigUI() {
 function handleSaveCloudConfig() {
   const config = {
     provider: $('#cloud-provider').value,
-    githubToken: $('#cloud-github-token').value.trim(),
+    githubToken: $('#cloud-github-token').value.trim() || state.cloudConfig?.githubToken || '',
     githubOwner: $('#cloud-github-owner').value.trim(),
     githubRepo: $('#cloud-github-repo').value.trim(),
     autoSync: false
@@ -2658,6 +2665,8 @@ function handleSaveCloudConfig() {
 
   state.cloudConfig = config;
   saveCloudConfig(config);
+  sessionStorage.setItem(CLOUD_TOKEN_SESSION_KEY, config.githubToken);
+  $('#cloud-github-token').value = '';
   showToast(state.language === 'es' ? '¡Configuración de nube guardada!' : 'Cloud settings saved!', 'success');
 }
 
@@ -2690,6 +2699,11 @@ async function handleCloudPull() {
     showToast(state.language === 'es' ? 'Configura tus credenciales de GitHub primero.' : 'Configure your GitHub credentials first.', 'warning');
     return;
   }
+
+  const message = state.language === 'es'
+    ? 'Esto reemplazará tu colección actual con la copia de GitHub. ¿Continuar?'
+    : 'This will replace your current collection with the GitHub backup. Continue?';
+  if (!window.confirm(message)) return;
 
   showToast(t('cloud.pulling') || 'Pulling from cloud...', 'info');
 

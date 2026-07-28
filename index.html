@@ -398,7 +398,7 @@
           <!-- Cloud Sync Tab -->
           <div class="tab-panel" id="panel-cloud" role="tabpanel">
             <p class="settings-description" data-i18n="cloud.description">
-              Sync and backup your bookmark collection across devices using GitHub or Google Drive.
+              Sync and back up your bookmark collection through a GitHub repository.
             </p>
             <div class="form-group">
               <label for="cloud-provider" data-i18n="cloud.provider">Provider</label>
@@ -410,14 +410,17 @@
               <label for="cloud-github-token" data-i18n="cloud.githubToken">GitHub Personal Access Token</label>
               <input type="password" id="cloud-github-token" placeholder="ghp_…">
             </div>
+            <p class="settings-description">
+              Use a fine-grained token limited to Contents access for one private repository. Tokens are retained only for this browser session; cloud backups are not encrypted.
+            </p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md)">
               <div class="form-group">
                 <label for="cloud-github-owner" data-i18n="cloud.githubOwner">Username / Owner</label>
-                <input type="text" id="cloud-github-owner" placeholder="oscarkleinkopf">
+                <input type="text" id="cloud-github-owner" placeholder="your-account">
               </div>
               <div class="form-group">
                 <label for="cloud-github-repo" data-i18n="cloud.githubRepo">Repository Name</label>
-                <input type="text" id="cloud-github-repo" placeholder="astounding-medovik-afc7d8">
+                <input type="text" id="cloud-github-repo" placeholder="private-bookmarks">
               </div>
             </div>
             <button class="btn-secondary btn-sm" id="save-cloud-config-btn" style="margin-bottom:var(--space-md)" data-i18n="cloud.saveConfig">Save Settings</button>
