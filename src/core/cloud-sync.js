@@ -1,7 +1,7 @@
 /**
  * @module cloud-sync
  * @description Provides 100% client-side cloud backup and synchronization
- * supporting GitHub Repositories/Gists and Google Drive API.
+ * using a GitHub repository (stores a bookmarkiq_backup.json file).
  */
 
 const CONFIG_KEY = 'bookmarkOrganizer_cloudConfig';

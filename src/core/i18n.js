@@ -32,23 +32,38 @@ export const translations = {
       title: 'Bookmark Organizer',
       subtitle: 'Organize your bookmarks intelligently with AI',
     },
+    header: {
+      subtitle: 'Smart Organizer',
+    },
     upload: {
       title: 'Upload Bookmarks',
       subtitle: 'Import your browser bookmarks file to get started',
       button: 'Choose File',
       dragDrop: 'or drag & drop your bookmarks HTML file here',
+      formats: 'Supports Chrome, Firefox, Edge, Brave, Safari exports (.html)',
+      or: 'or',
+      demo: 'Try with sample bookmarks',
     },
     results: {
       title: 'Organized Bookmarks',
       totalBookmarks: 'Total Bookmarks',
       categories: 'Categories',
       uncategorized: 'Uncategorized',
+      visualGrid: 'Gallery',
+      searchPlaceholder: 'Search bookmarks…',
+      expandAll: 'Expand All',
+      collapseAll: 'Collapse All',
+      export: 'Export',
+      bookmarksIn: 'bookmarks in',
     },
     export: {
       title: 'Export Bookmarks',
       button: 'Export as HTML',
       downloading: 'Downloading…',
       downloadClear: 'Download & Clear Session (Secure)',
+      filenameLabel: 'Filename',
+      download: 'Download Organized Bookmarks',
+      info: 'The exported file can be re-imported into any major browser.',
     },
     settings: {
       title: 'Settings',
@@ -62,6 +77,27 @@ export const translations = {
       addCategory: 'Add Category',
       save: 'Save',
       cancel: 'Cancel',
+      generalTab: 'General',
+      aiTab: 'AI',
+      categoriesTab: 'Categories',
+      aiDescription:
+        'Get smarter categorization by connecting Google AI. The Gemini API is free to use for reasonable volumes.',
+      apiKeyLabel: 'Gemini API Key',
+      saveKey: 'Save & Test',
+      clearKey: 'Clear Key',
+      connected: 'Connected',
+      notConnected: 'Not connected',
+      getKey: '🔑 Get a free API key from Google AI Studio →',
+      categoriesDescription:
+        'Add custom categories to better match your bookmark collection. Custom categories are checked before defaults.',
+      nameEn: 'Name (English)',
+      nameEs: 'Name (Español)',
+      emoji: 'Emoji',
+      color: 'Color',
+      domains: 'Domains (one per line)',
+      keywords: 'Keywords (one per line)',
+      addBtn: 'Add Category',
+      noCustom: 'No custom categories yet.',
     },
     category: {
       socialMedia: 'Social Media',
@@ -116,10 +152,20 @@ export const translations = {
       bulkTagsRemoved: 'Tag removed from selected bookmarks.',
       detailsSaved: 'Bookmark details saved!',
       addedToReadLater: 'Added to Read Later queue.',
+      success: 'Bookmarks organized successfully!',
+      aiSuccess: 'Bookmarks organized with AI assistance!',
+      demoLoaded: 'Demo bookmarks loaded!',
+      testingKey: 'Testing API key…',
+      keyValid: 'API key is valid!',
+      keyCleared: 'API key cleared.',
+      deleted: 'Bookmark removed.',
+      moved: 'Bookmark moved.',
     },
     stats: {
       title: 'Statistics',
       breakdown: 'Category Breakdown',
+      distribution: 'Distribution',
+      bookmarks: 'Bookmarks',
     },
     linkChecker: {
       title: 'Link Health',
@@ -211,6 +257,8 @@ export const translations = {
       descriptionLabel: 'Notes / Description',
       ratingLabel: 'Rating',
       saveDetails: 'Save Details',
+      title: 'Title',
+      url: 'URL',
     },
     readLater: {
       title: 'Read Later',
@@ -226,7 +274,7 @@ export const translations = {
     cloud: {
       tabTitle: 'Cloud Sync',
       title: 'Cloud Storage Synchronization',
-      description: 'Sync and backup your bookmark collection across devices using GitHub or Google Drive.',
+      description: 'Sync and back up your bookmark collection across devices using a GitHub repository.',
       provider: 'Sync Provider',
       githubToken: 'GitHub Personal Access Token',
       githubRepo: 'Repository Name',
@@ -265,6 +313,38 @@ export const translations = {
       summarizing: 'Generating AI summary...',
       generated: 'AI summary generated!',
     },
+    context: {
+      open: 'Open URL',
+      move: 'Move to…',
+      delete: 'Delete',
+    },
+    empty: {
+      title: 'No bookmarks yet',
+      text: 'Upload a bookmark file to get started',
+    },
+    processing: {
+      reading: 'Reading file…',
+      parsing: 'Parsing bookmarks…',
+      categorizing: 'Categorizing bookmarks…',
+      ai: 'Running AI classification…',
+      organizing: 'Organizing…',
+      done: 'Done!',
+      wait: 'This may take a moment',
+    },
+    errors: {
+      invalidFile: 'Please select an HTML bookmark file.',
+      noBookmarks: 'No bookmarks found in the file.',
+      processingFailed: 'Failed to process bookmarks.',
+      noData: 'No data available.',
+      exportFailed: 'Export failed.',
+      emptyKey: 'Please enter an API key.',
+      invalidKey: 'Invalid API key.',
+      keyTestFailed: 'Could not verify key.',
+      nameRequired: 'Category name (English) is required.',
+      addFailed: 'Failed to add category.',
+      removeFailed: 'Failed to remove category.',
+      noOtherCats: 'No other categories available.',
+    },
   },
 
   // ── Español ──────────────────────────────────────────────────────────────
@@ -273,24 +353,39 @@ export const translations = {
       title: 'Organizador de Marcadores',
       subtitle: 'Organiza tus marcadores de forma inteligente con IA',
     },
+    header: {
+      subtitle: 'Organizador Inteligente',
+    },
     upload: {
       title: 'Subir Marcadores',
       subtitle:
         'Importa el archivo de marcadores de tu navegador para comenzar',
       button: 'Elegir Archivo',
       dragDrop: 'o arrastra y suelta tu archivo HTML de marcadores aquí',
+      formats: 'Compatible con exportaciones de Chrome, Firefox, Edge, Brave, Safari (.html)',
+      or: 'o',
+      demo: 'Probar con marcadores de ejemplo',
     },
     results: {
       title: 'Marcadores Organizados',
       totalBookmarks: 'Total de Marcadores',
       categories: 'Categorías',
       uncategorized: 'Sin Categorizar',
+      visualGrid: 'Galería',
+      searchPlaceholder: 'Buscar marcadores…',
+      expandAll: 'Expandir Todo',
+      collapseAll: 'Contraer Todo',
+      export: 'Exportar',
+      bookmarksIn: 'marcadores en',
     },
     export: {
       title: 'Exportar Marcadores',
       button: 'Exportar como HTML',
       downloading: 'Descargando…',
       downloadClear: 'Descargar y Limpiar Sesión (Seguro)',
+      filenameLabel: 'Nombre de Archivo',
+      download: 'Descargar Marcadores Organizados',
+      info: 'El archivo exportado se puede reimportar en cualquier navegador principal.',
     },
     settings: {
       title: 'Configuración',
@@ -304,6 +399,27 @@ export const translations = {
       addCategory: 'Añadir Categoría',
       save: 'Guardar',
       cancel: 'Cancelar',
+      generalTab: 'General',
+      aiTab: 'IA',
+      categoriesTab: 'Categorías',
+      aiDescription:
+        'Obtén una categorización más inteligente conectando Google AI. La API de Gemini es gratuita para volúmenes razonables.',
+      apiKeyLabel: 'Clave API de Gemini',
+      saveKey: 'Guardar y Probar',
+      clearKey: 'Borrar Clave',
+      connected: 'Conectado',
+      notConnected: 'No conectado',
+      getKey: '🔑 Obtén una clave API gratuita en Google AI Studio →',
+      categoriesDescription:
+        'Añade categorías personalizadas para ajustarse mejor a tu colección. Las categorías personalizadas se comprueban antes que las predeterminadas.',
+      nameEn: 'Nombre (Inglés)',
+      nameEs: 'Nombre (Español)',
+      emoji: 'Emoji',
+      color: 'Color',
+      domains: 'Dominios (uno por línea)',
+      keywords: 'Palabras clave (una por línea)',
+      addBtn: 'Añadir Categoría',
+      noCustom: 'Aún no hay categorías personalizadas.',
     },
     category: {
       socialMedia: 'Redes Sociales',
@@ -358,10 +474,20 @@ export const translations = {
       bulkTagsRemoved: 'Etiqueta eliminada de los marcadores seleccionados.',
       detailsSaved: '¡Detalles del marcador guardados!',
       addedToReadLater: 'Añadido a la cola de Lectura Pendiente.',
+      success: '¡Marcadores organizados exitosamente!',
+      aiSuccess: '¡Marcadores organizados con ayuda de IA!',
+      demoLoaded: '¡Marcadores de ejemplo cargados!',
+      testingKey: 'Probando clave API…',
+      keyValid: '¡La clave API es válida!',
+      keyCleared: 'Clave API borrada.',
+      deleted: 'Marcador eliminado.',
+      moved: 'Marcador movido.',
     },
     stats: {
       title: 'Estadísticas',
       breakdown: 'Desglose por Categoría',
+      distribution: 'Distribución',
+      bookmarks: 'Marcadores',
     },
     linkChecker: {
       title: 'Estado de Enlaces',
@@ -453,6 +579,8 @@ export const translations = {
       descriptionLabel: 'Notas / Descripción',
       ratingLabel: 'Calificación',
       saveDetails: 'Guardar Detalles',
+      title: 'Título',
+      url: 'URL',
     },
     readLater: {
       title: 'Lectura Pendiente',
@@ -468,7 +596,7 @@ export const translations = {
     cloud: {
       tabTitle: 'Sincro Cloud',
       title: 'Sincronización en la Nube',
-      description: 'Respalda y sincroniza tu colección de marcadores entre dispositivos mediante GitHub o Google Drive.',
+      description: 'Respalda y sincroniza tu colección de marcadores entre dispositivos mediante un repositorio de GitHub.',
       provider: 'Proveedor de Sincro',
       githubToken: 'Token de Acceso Personal de GitHub',
       githubRepo: 'Nombre del Repositorio',
@@ -507,6 +635,38 @@ export const translations = {
       summarizing: 'Generando resumen con IA...',
       generated: '¡Resumen generado con IA!',
     },
+    context: {
+      open: 'Abrir URL',
+      move: 'Mover a…',
+      delete: 'Eliminar',
+    },
+    empty: {
+      title: 'Aún no hay marcadores',
+      text: 'Sube un archivo de marcadores para comenzar',
+    },
+    processing: {
+      reading: 'Leyendo archivo…',
+      parsing: 'Analizando marcadores…',
+      categorizing: 'Categorizando marcadores…',
+      ai: 'Ejecutando clasificación con IA…',
+      organizing: 'Organizando…',
+      done: '¡Listo!',
+      wait: 'Esto puede tardar un momento',
+    },
+    errors: {
+      invalidFile: 'Por favor selecciona un archivo HTML de marcadores.',
+      noBookmarks: 'No se encontraron marcadores en el archivo.',
+      processingFailed: 'No se pudieron procesar los marcadores.',
+      noData: 'No hay datos disponibles.',
+      exportFailed: 'La exportación falló.',
+      emptyKey: 'Por favor introduce una clave API.',
+      invalidKey: 'Clave API inválida.',
+      keyTestFailed: 'No se pudo verificar la clave.',
+      nameRequired: 'El nombre de la categoría (Inglés) es obligatorio.',
+      addFailed: 'No se pudo añadir la categoría.',
+      removeFailed: 'No se pudo eliminar la categoría.',
+      noOtherCats: 'No hay otras categorías disponibles.',
+    },
   },
 };
 
@@ -526,6 +686,23 @@ function resolve(obj, path) {
   }, obj);
 }
 
+/**
+ * Converts a dot-notation key into a human-readable label as a last-resort
+ * fallback, so a missing translation never surfaces a raw key like
+ * "results.expandAll" in the UI (renders "Expand All" instead).
+ * @param {string} key - Dot-separated key.
+ * @returns {string}
+ */
+function humanizeKey(key) {
+  const last = String(key).split('.').pop() || '';
+  const spaced = last
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+  if (!spaced) return key;
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -542,12 +719,16 @@ export function t(key) {
   if (value !== undefined && typeof value === 'string') {
     return value;
   }
-  // Fallback: try the other language, then return the raw key.
+  // Fallback: try the other language, then a humanized version of the key.
   const fallback = resolve(
     translations[currentLanguage === 'en' ? 'es' : 'en'],
     key,
   );
-  return typeof fallback === 'string' ? fallback : key;
+  if (typeof fallback === 'string') return fallback;
+  if (typeof console !== 'undefined' && console.warn) {
+    console.warn(`[i18n] Missing translation for key "${key}"`);
+  }
+  return humanizeKey(key);
 }
 
 /**
