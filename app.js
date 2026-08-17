@@ -529,8 +529,7 @@ function renderResults(data) {
   const entries = Object.entries(data);
   entries.forEach(([, bks]) => { totalBookmarks += bks.length; });
 
-  const countEl = $('#results-count');
-  countEl.innerHTML = `<strong>${totalBookmarks.toLocaleString()}</strong> ${t('results.bookmarksIn') || 'bookmarks in'} <strong>${entries.length}</strong> ${t('results.categories') || 'categories'}`;
+  renderResultsSummary(data);
 
   // Expand all by default
   entries.forEach(([cat]) => state.expandedCategories.add(cat));
@@ -561,6 +560,20 @@ function renderResults(data) {
   state.linkResults = null;
   state.linkFilter = 'all';
   $('#link-filter-pills').style.display = 'none';
+}
+
+/**
+ * Renders the "N bookmarks in M categories" summary line. Extracted so it can
+ * be refreshed on language change (its text is built via innerHTML and is not
+ * covered by the data-i18n attribute pass in updateTranslations()).
+ */
+function renderResultsSummary(data) {
+  const countEl = $('#results-count');
+  if (!countEl || !data) return;
+  const entries = Object.entries(data);
+  let totalBookmarks = 0;
+  entries.forEach(([, bks]) => { totalBookmarks += bks.length; });
+  countEl.innerHTML = `<strong>${totalBookmarks.toLocaleString()}</strong> ${t('results.bookmarksIn') || 'bookmarks in'} <strong>${entries.length}</strong> ${t('results.categories') || 'categories'}`;
 }
 
 /* ────────────────────────────────────
@@ -1155,10 +1168,18 @@ function handleLanguageChange(lang) {
   $('#settings-language').value = lang;
   updateTranslations();
 
-  // Re-render tree names if results visible
+  // Re-render dynamically-generated content so translated strings built via
+  // innerHTML (not covered by the data-i18n pass) also update immediately.
+  // Preserves user state (expanded categories are only reset by renderResults).
   if (state.organizedData) {
+    renderResultsSummary(state.organizedData);
     renderTreeView(state.organizedData);
     renderStats(state.organizedData);
+    try { renderSmartCollectionChips(); } catch (e) { console.warn('[smart-collections]', e); }
+    try { renderCurrentAnalytics(); renderInsights(); } catch (e) { console.warn('[analytics]', e); }
+
+    if (state.activeTab === 'readlater') renderReadLaterList();
+    else if (state.activeTab === 'gallery') renderVisualGrid();
   }
 
   if (state.customCategories.length) renderCustomCategoriesList();
